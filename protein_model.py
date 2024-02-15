@@ -70,73 +70,79 @@ for ind, family in enumerate(families):
         train_family_embeds[train_family_accessions == family, :]
     )
 
-# # Re-Train: update prototypes to discourage misclassification
-# for _ in range(10):
-#     # train_preds = cosine_sim_batch(all_prototypes, train_family_embeds)
-#     # pred_train_families = families[np.argmax(train_preds, axis=0)]
-#     pred_train_families = families[
-#         top_n_class_matches(all_prototypes, train_family_embeds).flatten()
-#     ]
-#     print(balanced_accuracy_score(train_family_accessions, pred_train_families))
-#     for index in np.where(train_family_accessions != pred_train_families)[0]:
-#         embed = train_family_embeds[index]
-#         true_family = train_family_accessions[index]
-#         predicted_family = pred_train_families[index]
-#         # Add this embed to it's correct family
-#         all_prototypes[families == true_family, :] += LEARNING_RATE * embed
-#         # Subtract this embed from it's mispredicted family
-#         all_prototypes[families == predicted_family, :] -= LEARNING_RATE * embed
-#     all_prototypes = np.sign(all_prototypes)
-#     all_prototypes[all_prototypes == 0] = 1
+# Re-Train: update prototypes to discourage misclassification
+for _ in range(10):
+    # train_preds = cosine_sim_batch(all_prototypes, train_family_embeds)
+    # pred_train_families = families[np.argmax(train_preds, axis=0)]
+    pred_train_families = families[
+        top_n_class_matches(all_prototypes, train_family_embeds).flatten()
+    ]
+    print(balanced_accuracy_score(train_family_accessions, pred_train_families))
+    for index in np.where(train_family_accessions != pred_train_families)[0]:
+        embed = train_family_embeds[index]
+        true_family = train_family_accessions[index]
+        predicted_family = pred_train_families[index]
+        # Add this embed to it's correct family
+        all_prototypes[families == true_family, :] += LEARNING_RATE * embed
+        # Subtract this embed from it's mispredicted family
+        all_prototypes[families == predicted_family, :] -= LEARNING_RATE * embed
+    all_prototypes = np.sign(all_prototypes)
+    all_prototypes[all_prototypes == 0] = 1
 
 
 # Predict: measure simularity between encoded sequencs and each prototype
-# similarity_array = cosine_sim_batch(all_prototypes, test_family_embeds)
-# pred_cat = families[np.argmax(similarity_array, axis=0)]
-pred_cat = families[top_n_class_matches(all_prototypes, test_family_embeds).flatten()]
-print(f"pred_acc = {balanced_accuracy_score(test_family_accessions, pred_cat):.2%}")
+similarity_array = cosine_sim_batch(all_prototypes, test_family_embeds)
+pred_cat = families[np.argmax(similarity_array, axis=0)]
+# pred_cat = families[top_n_class_matches(all_prototypes, test_family_embeds).flatten()]
+accuracy = balanced_accuracy_score(test_family_accessions, pred_cat)
+print(f"pred_acc = {accuracy:.2%}")
 sns.heatmap(confusion_matrix(test_family_accessions, pred_cat, normalize="true"))
+plt.suptitle("Test Accuracy = {accuracy}")
+plt.savefig("results/base_train_confusion.png")
 plt.show()
 
 
-# # Visualise embedding spaces
-# from sklearn.preprocessing import LabelEncoder
-# from sklearn.decomposition import PCA
+# Visualise embedding spaces
+from sklearn.preprocessing import LabelEncoder
+from sklearn.decomposition import PCA
 
-# X = similarity_array.T
-# colors = LabelEncoder().fit_transform(test_family_accessions)
-# pca_embed = PCA()
-# X_new = pca_embed.fit_transform(X)
+X = similarity_array.T
+colors = LabelEncoder().fit_transform(test_family_accessions)
+pca_embed = PCA()
+X_new = pca_embed.fit_transform(X)
 
-# fig = plt.figure(figsize=(7, 7))
-# ax = fig.add_subplot(projection="3d")
-# scatter = ax.scatter(X_new[:, 0], X_new[:, 1], X_new[:, 2], c=colors, alpha=0.5)
-# plt.show()
+fig = plt.figure(figsize=(7, 7))
+ax = fig.add_subplot(projection="3d")
+scatter = ax.scatter(X_new[:, 0], X_new[:, 1], X_new[:, 2], c=colors, alpha=0.5)
+plt.savefig("results/base_train_pca.png")
+plt.show()
 
 
-# # Look at similarity of prototypes
-# proto_sim = cosine_sim_batch(all_prototypes, all_prototypes)
-# these_family_ids = (
-#     train_data.query("family_accession.isin(@families)")
-#     .filter(["family_id", "family_accession"], axis=1)
-#     .drop_duplicates()
-#     .set_index("family_accession")
-#     .reindex(families)["family_id"]
-#     .values
-# )
-# family_id = these_family_ids  # families
-# df = (
-#     pd.DataFrame(proto_sim, index=family_id)
-#     .assign(from_family=family_id)
-#     .melt(id_vars="from_family")
-#     .assign(to_family=lambda x: family_id[x["variable"].values.astype(int)])
-#     .drop(columns=["variable"])
-# )
-# g = sns.clustermap(
-#     df,
-#     pivot_kws=dict(index="from_family", columns="to_family", values="value"),
-#     cmap="Blues",
-#     robust=True,
-#     dendrogram_ratio=0.1,
-#     figsize=(30, 30),
-# )
+# Look at similarity of prototypes
+proto_sim = cosine_sim_batch(all_prototypes, all_prototypes)
+these_family_ids = (
+    train_data.query("family_accession.isin(@families)")
+    .filter(["family_id", "family_accession"], axis=1)
+    .drop_duplicates()
+    .set_index("family_accession")
+    .reindex(families)["family_id"]
+    .values
+)
+family_id = these_family_ids  # families
+df = (
+    pd.DataFrame(proto_sim, index=family_id)
+    .assign(from_family=family_id)
+    .melt(id_vars="from_family")
+    .assign(to_family=lambda x: family_id[x["variable"].values.astype(int)])
+    .drop(columns=["variable"])
+)
+g = sns.clustermap(
+    df,
+    pivot_kws=dict(index="from_family", columns="to_family", values="value"),
+    cmap="Blues",
+    robust=True,
+    dendrogram_ratio=0.1,
+    figsize=(30, 30),
+)
+plt.savefig("results/base_train_prototypes.png")
+plt.show()
