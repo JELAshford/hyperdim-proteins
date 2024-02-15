@@ -4,6 +4,14 @@ Use high-dimensional (~10_000) vector embeddings of amino-acids, combined using 
 
 ## Setup
 
+### Python Environment
+
+Create a `Python` environment with the flavour of your choosing *(`venv`, `conda`, etc.)*, activate it, and install the module in this local repo with:
+
+```bash
+python -m pip install -e .
+```
+
 ### Data Source
 
 The data from this project can be acquire from [this Kaggle repo](https://www.kaggle.com/datasets/googleai/pfam-seed-random-split), and should be first extracted and included in a folder called `/data` in this repository, such that `tree .` includes:
