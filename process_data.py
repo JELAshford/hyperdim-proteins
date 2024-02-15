@@ -12,6 +12,7 @@ def load_data_folder(directory: str):
     return pd.concat([*map(pd.read_csv, train_files)])
 
 
-for dset in ["train", "dev", "test"]:
-    data = load_data_folder(f"{DATA_DIR}/{dset}")
-    data.to_feather(f"data/{dset}.feather")
+if __name__ == "__main__":
+    for dset in ["train", "dev", "test"]:
+        data = load_data_folder(f"{DATA_DIR}/{dset}")
+        data.to_feather(f"{DATA_DIR}/{dset}.feather")
