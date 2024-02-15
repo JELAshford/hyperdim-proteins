@@ -1,0 +1,21 @@
+[package]
+name = "hyperdim-proteins"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "hyperdim_proteins"
+crate-type = ["cdylib"]
+
+[dependencies]
+itertools = "0.12.1"
+ndarray = "0.15.6"
+ndarray-linalg = "0.16.0"
+ndarray-rand = "0.14.0"
+numpy = "0.19.0"
+pad = "0.1.6"
+pyo3 = "0.19.0"
+rand = "0.8.5"
+rand_isaac = "0.3.0"
+rayon = "1.8.1"
