@@ -45,6 +45,7 @@ position_hdvs = range_hdvs(list(np.arange(0, 1, RANGE_STEP)))
 fig, axs = plt.subplots(1, 2)
 axs[0].imshow(cosine_sim_batch(position_hdvs, position_hdvs))
 axs[1].imshow(np.corrcoef(position_hdvs))
+plt.savefig("results/position_positions.png")
 plt.show()
 embed = lambda seqs: np.stack(
     embed_sequences_positional(seqs, trimer_hdvs, position_hdvs)
@@ -82,48 +83,51 @@ similarity_array = cosine_sim_batch(all_prototypes, test_family_embeds)
 pred_cat = families[np.argmax(similarity_array, axis=0)]
 print(f"pred_acc = {balanced_accuracy_score(test_family_accessions, pred_cat):.2%}")
 sns.heatmap(confusion_matrix(test_family_accessions, pred_cat, normalize="true"))
+plt.savefig("results/position_confusion.png")
 plt.show()
 
 
-# # Visualise embedding spaces
-# from sklearn.preprocessing import LabelEncoder
-# from sklearn.decomposition import PCA
+# Visualise embedding spaces
+from sklearn.preprocessing import LabelEncoder
+from sklearn.decomposition import PCA
 
-# X = similarity_array.T
-# colors = LabelEncoder().fit_transform(test_family_accessions)
-# pca_embed = PCA()
-# X_new = pca_embed.fit_transform(X)
+X = similarity_array.T
+colors = LabelEncoder().fit_transform(test_family_accessions)
+pca_embed = PCA()
+X_new = pca_embed.fit_transform(X)
 
-# fig = plt.figure(figsize=(7, 7))
-# ax = fig.add_subplot(projection="3d")
-# scatter = ax.scatter(X_new[:, 0], X_new[:, 1], X_new[:, 2], c=colors, alpha=0.5)
-# plt.show()
+fig = plt.figure(figsize=(7, 7))
+ax = fig.add_subplot(projection="3d")
+scatter = ax.scatter(X_new[:, 0], X_new[:, 1], X_new[:, 2], c=colors, alpha=0.5)
+plt.savefig("results/position_pca.png")
+plt.show()
 
 
-# # Look at similarity of prototypes
-# proto_sim = cosine_sim_batch(all_prototypes, all_prototypes)
+# Look at similarity of prototypes
+proto_sim = cosine_sim_batch(all_prototypes, all_prototypes)
 
-# these_family_ids = (
-#     train_data.query("family_accession.isin(@families)")
-#     .filter(["family_id", "family_accession"], axis=1)
-#     .drop_duplicates()
-#     .set_index("family_accession")
-#     .reindex(families)["family_id"]
-#     .values
-# )
-# family_id = these_family_ids  # families
-# df = (
-#     pd.DataFrame(proto_sim, index=family_id)
-#     .assign(from_family=family_id)
-#     .melt(id_vars="from_family")
-#     .assign(to_family=lambda x: family_id[x["variable"].values.astype(int)])
-#     .drop(columns=["variable"])
-# )
-# g = sns.clustermap(
-#     df,
-#     pivot_kws=dict(index="from_family", columns="to_family", values="value"),
-#     cmap="Blues",
-#     robust=True,
-#     dendrogram_ratio=0.1,
-#     figsize=(30, 30),
-# )
+these_family_ids = (
+    train_data.query("family_accession.isin(@families)")
+    .filter(["family_id", "family_accession"], axis=1)
+    .drop_duplicates()
+    .set_index("family_accession")
+    .reindex(families)["family_id"]
+    .values
+)
+family_id = these_family_ids  # families
+df = (
+    pd.DataFrame(proto_sim, index=family_id)
+    .assign(from_family=family_id)
+    .melt(id_vars="from_family")
+    .assign(to_family=lambda x: family_id[x["variable"].values.astype(int)])
+    .drop(columns=["variable"])
+)
+g = sns.clustermap(
+    df,
+    pivot_kws=dict(index="from_family", columns="to_family", values="value"),
+    cmap="Blues",
+    robust=True,
+    dendrogram_ratio=0.1,
+    figsize=(30, 30),
+)
+plt.savefig("results/position_prototypes.png")
