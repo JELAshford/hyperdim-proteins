@@ -70,24 +70,24 @@ for ind, family in enumerate(families):
         train_family_embeds[train_family_accessions == family, :]
     )
 
-# Re-Train: update prototypes to discourage misclassification
-for _ in range(10):
-    # train_preds = cosine_sim_batch(all_prototypes, train_family_embeds)
-    # pred_train_families = families[np.argmax(train_preds, axis=0)]
-    pred_train_families = families[
-        top_n_class_matches(all_prototypes, train_family_embeds).flatten()
-    ]
-    print(balanced_accuracy_score(train_family_accessions, pred_train_families))
-    for index in np.where(train_family_accessions != pred_train_families)[0]:
-        embed = train_family_embeds[index]
-        true_family = train_family_accessions[index]
-        predicted_family = pred_train_families[index]
-        # Add this embed to it's correct family
-        all_prototypes[families == true_family, :] += LEARNING_RATE * embed
-        # Subtract this embed from it's mispredicted family
-        all_prototypes[families == predicted_family, :] -= LEARNING_RATE * embed
-    all_prototypes = np.sign(all_prototypes)
-    all_prototypes[all_prototypes == 0] = 1
+# # Re-Train: update prototypes to discourage misclassification
+# for _ in range(10):
+#     # train_preds = cosine_sim_batch(all_prototypes, train_family_embeds)
+#     # pred_train_families = families[np.argmax(train_preds, axis=0)]
+#     pred_train_families = families[
+#         top_n_class_matches(all_prototypes, train_family_embeds).flatten()
+#     ]
+#     print(balanced_accuracy_score(train_family_accessions, pred_train_families))
+#     for index in np.where(train_family_accessions != pred_train_families)[0]:
+#         embed = train_family_embeds[index]
+#         true_family = train_family_accessions[index]
+#         predicted_family = pred_train_families[index]
+#         # Add this embed to it's correct family
+#         all_prototypes[families == true_family, :] += LEARNING_RATE * embed
+#         # Subtract this embed from it's mispredicted family
+#         all_prototypes[families == predicted_family, :] -= LEARNING_RATE * embed
+#     all_prototypes = np.sign(all_prototypes)
+#     all_prototypes[all_prototypes == 0] = 1
 
 
 # Predict: measure simularity between encoded sequencs and each prototype
@@ -97,7 +97,7 @@ pred_cat = families[np.argmax(similarity_array, axis=0)]
 accuracy = balanced_accuracy_score(test_family_accessions, pred_cat)
 print(f"pred_acc = {accuracy:.2%}")
 sns.heatmap(confusion_matrix(test_family_accessions, pred_cat, normalize="true"))
-plt.suptitle("Test Accuracy = {accuracy}")
+plt.suptitle(f"Test Accuracy = {accuracy}")
 plt.savefig("results/base_train_confusion.png")
 plt.show()
 
