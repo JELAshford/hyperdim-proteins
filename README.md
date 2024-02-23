@@ -9,6 +9,7 @@ Use high-dimensional (~10_000) vector embeddings of amino-acids, combined using 
 Create a `Python` environment with the flavour of your choosing *(`venv`, `conda`, etc.)*, activate it, and install the module in this local repo with:
 
 ```bash
+maturin develop --release
 python -m pip install -e .
 ```
 
